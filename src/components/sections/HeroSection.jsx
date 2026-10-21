@@ -1,6 +1,22 @@
 import { ArrowDown, ArrowRight, ArrowUpLeft } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function HeroSection() {
+  const [name, setName] = useState("");
+  const navigate = useNavigate();
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const cleanName = name.trim();
+
+    if (!cleanName) return;
+
+    sessionStorage.setItem("metricfinUserName", cleanName);
+    navigate("/dashboard");
+  }
+
   return (
     <section
       id="inicio"
@@ -28,16 +44,41 @@ function HeroSection() {
             controle sobre seu dinheiro, tudo em um só lugar.
           </p>
 
-          <a
-            href="#experimente"
-            className="mt-8 inline-flex items-center gap-3 rounded-full bg-[#c7ff45] px-7 py-4 font-bold text-[#031b13] transition duration-300 hover:-translate-y-1 hover:bg-lime-200 hover:shadow-[0_0_35px_rgba(199,255,69,0.2)]"
-          >
-            Experimente agora
-            <ArrowRight size={19} />
-          </a>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-3">
+            <div>
+              <label
+                htmlFor="visitor-name"
+                className="mb-2 block text-sm font-medium text-white"
+              >
+                Como podemos te chamar?
+              </label>
 
-          <p className="mt-4 text-xs text-slate-500">
-            Simples, visual e feito para você.
+              <input
+                id="visitor-name"
+                name="name"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Ex.: João Silva"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+                minLength={2}
+                maxLength={60}
+                className="w-full rounded-xl border border-lime-300/25 bg-[#06251a]/80 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-[#c7ff45] focus:ring-2 focus:ring-lime-300/20"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9be66b] to-[#d4ff58] px-7 py-4 font-bold text-[#031b13] transition duration-300 hover:-translate-y-1 hover:shadow-[0_0_35px_rgba(199,255,69,0.2)]"
+            >
+              Experimente agora
+              <ArrowRight size={19} />
+            </button>
+          </form>
+
+          <p className="mt-4 text-xs text-slate-400">
+            Comece em segundos, sem precisar criar uma conta.
           </p>
         </div>
 
