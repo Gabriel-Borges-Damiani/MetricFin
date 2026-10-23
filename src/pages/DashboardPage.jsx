@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Wallet,
   CreditCard,
@@ -8,12 +7,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 import Sidebar from "../components/layout/SideBar";
-
-const today = new Date();
-
-const initialMonth = `${today.getFullYear()}-${String(
-  today.getMonth() + 1,
-).padStart(2, "0")}`;
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedMonth } from "../features/finance/financeSlice";
 
 const monthOptions = [
   { value: "01", label: "Janeiro" },
@@ -30,25 +25,12 @@ const monthOptions = [
   { value: "12", label: "Dezembro" },
 ];
 
-const currentYear = today.getFullYear();
+const currentYear = new Date().getFullYear();
 
 const yearOptions = Array.from(
   { length: 21 },
   (_, index) => currentYear - 10 + index,
 );
-
-const demoData = {
-  renda: 0,
-  gastos: 0,
-  investido: 0,
-  saldo: 0,
-};
-
-const expenseCategories = [
-  { name: "Moradia", value: 0, color: "bg-[#b8e986]" },
-  { name: "Alimentação", value: 0, color: "bg-[#b9c9f5]" },
-  { name: "Outros", value: 0, color: "bg-[#f5d7c2]" },
-];
 
 const currency = (value) =>
   value.toLocaleString("pt-BR", {
@@ -58,43 +40,96 @@ const currency = (value) =>
   });
 
 function DashboardPage() {
-  const [selectedMonth, setSelectedMonth] = useState(initialMonth);
+  const dispatch = useDispatch();
 
-  const [selectedYear, setSelectedYear] = useState(String(today.getFullYear()));
+  const financeState = useSelector((state) => state.finance);
+
+  const selectedMonth = financeState.selectedMonth;
+
+  const monthValues = financeState.months[selectedMonth];
+
+  console.log("Dashboard - Redux:", {
+    selectedMonth,
+    monthValues,
+  });
 
   const selectedMonthNumber = selectedMonth.split("-")[1];
+  const selectedYear = selectedMonth.split("-")[0];
+
+  const income =
+    Number(monthValues?.salary || 0) + Number(monthValues?.extraIncome || 0);
+
+  const expenses = Object.values(monthValues?.expenses ?? {}).reduce(
+    (total, value) => total + Number(value || 0),
+    0,
+  );
+
+  const invested = Number(monthValues?.invested || 0);
+  const saved = Number(monthValues?.saved || 0);
+
+  const balance = income - expenses - saved - invested;
 
   function handleMonthChange(month) {
-    setSelectedMonth(`${selectedYear}-${month}`);
+    dispatch(setSelectedMonth(`${selectedYear}-${month}`));
   }
 
   function handleYearChange(year) {
-    setSelectedYear(year);
-    setSelectedMonth(`${year}-${selectedMonthNumber}`);
+    dispatch(setSelectedMonth(`${year}-${selectedMonthNumber}`));
   }
+
+  const categoryNames = {
+    moradia: "Moradia",
+    alimentacao: "Alimentação",
+    transporte: "Transporte",
+    saude: "Saúde",
+    lazer: "Lazer",
+    educacao: "Educação",
+    compras: "Compras",
+    outros: "Outros",
+  };
+
+  const categoryColors = [
+    "bg-[#b8e986]",
+    "bg-[#b9c9f5]",
+    "bg-[#f5d7c2]",
+    "bg-[#b7e3d2]",
+    "bg-[#e5c7f2]",
+    "bg-[#f4e29b]",
+    "bg-[#b8dce8]",
+    "bg-[#e7b9b9]",
+  ];
+
+  const expenseCategories = Object.entries(monthValues?.expenses ?? {}).map(
+    ([key, value], index) => ({
+      name: categoryNames[key] ?? key,
+      amount: Number(value || 0),
+      value: expenses > 0 ? (Number(value || 0) / expenses) * 100 : 0,
+      color: categoryColors[index % categoryColors.length],
+    }),
+  );
 
   const cards = [
     {
       label: "Renda",
-      value: demoData.renda,
+      value: income,
       icon: Wallet,
       iconColor: "text-emerald-700",
     },
     {
       label: "Gastos",
-      value: demoData.gastos,
+      value: expenses,
       icon: CreditCard,
       iconColor: "text-orange-600",
     },
     {
       label: "Investido",
-      value: demoData.investido,
+      value: invested,
       icon: TrendingUp,
       iconColor: "text-blue-600",
     },
     {
       label: "Saldo restante",
-      value: demoData.saldo,
+      value: balance,
       icon: PiggyBank,
       iconColor: "text-lime-800",
       highlight: true,
@@ -199,7 +234,7 @@ function DashboardPage() {
             <div
               className="mt-5 flex h-3 gap-2 overflow-hidden rounded-full"
               role="img"
-              aria-label="Distribuição ilustrativa dos gastos por categoria"
+              aria-label="Distribuição dos gastos reais por categoria"
             >
               {expenseCategories.map((category) => (
                 <div
@@ -220,7 +255,7 @@ function DashboardPage() {
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${category.color}`}
                   />
-                  {category.name}
+                  {category.name} — {currency(category.amount)}
                 </span>
               ))}
             </div>
@@ -252,7 +287,8 @@ function DashboardPage() {
           </section>
 
           <p className="mt-5 text-center text-xs text-slate-400">
-            Valores demonstrativos — ainda não são seus dados financeiros.
+            Os valores são temporários e ficam disponíveis enquanto o aplicativo
+            estiver aberto.
           </p>
         </div>
       </main>
